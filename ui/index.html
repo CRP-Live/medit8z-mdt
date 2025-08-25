@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -11,7 +11,12 @@
         <!-- Header -->
         <div class="mdt-header">
             <div class="header-left">
-                <img src="assets/images/logo.png" alt="MDT Logo" class="mdt-logo">
+                <div class="mdt-logo">
+                    <svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="50" height="50" rx="8" fill="#e94560"/>
+                        <text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="white" font-size="20" font-weight="bold">MDT</text>
+                    </svg>
+                </div>
                 <div class="header-info">
                     <h1 id="department-name">Mobile Data Terminal</h1>
                     <span id="officer-info">Loading...</span>
@@ -19,7 +24,7 @@
             </div>
             <div class="header-right">
                 <span id="current-time">00:00</span>
-                <button class="btn-close" onclick="closeMDT()">✕</button>
+                <button class="btn-close" onclick="closeMDT()">✖</button>
             </div>
         </div>
 
@@ -40,40 +45,115 @@
         <div class="mdt-content">
             <!-- Dashboard Tab -->
             <div id="dashboard" class="tab-content active">
-                <h2>Dashboard</h2>
+                <h2>Police Dashboard</h2>
+                
+                <!-- Global Search Bar -->
+                <div class="global-search-container">
+                    <input type="text" id="global-search" placeholder="Global search - profiles, vehicles, incidents...">
+                    <button onclick="globalSearch()">Search All</button>
+                </div>
+                <div id="global-search-results"></div>
+                
+                <!-- Main Dashboard Grid -->
                 <div class="dashboard-grid">
+                    <!-- Welcome Card -->
                     <div class="dashboard-card">
                         <h3>Welcome</h3>
-                        <p>Welcome to the Mobile Data Terminal</p>
                         <p class="officer-name">Officer: <span id="officer-name-display">Loading...</span></p>
                         <p class="officer-callsign">Callsign: <span id="officer-callsign">N/A</span></p>
                         <p class="officer-rank">Rank: <span id="officer-rank">Loading...</span></p>
+                        <button class="panic-button" onclick="activatePanicButton()">PANIC</button>
                     </div>
+                    
+                    <!-- Active Units -->
                     <div class="dashboard-card">
                         <h3>Active Units</h3>
-                        <p class="stat-number">0</p>
+                        <p class="stat-number" id="active-units">0</p>
                         <p class="stat-label">Officers On Duty</p>
                     </div>
+                    
+                    <!-- Recent Calls -->
                     <div class="dashboard-card">
-                        <h3>Recent Calls</h3>
-                        <p class="stat-number">0</p>
-                        <p class="stat-label">Last 3 Minutes</p>
+                        <h3>Recent Calls (3 min)</h3>
+                        <p class="stat-number" id="recent-calls">0</p>
+                        <p class="stat-label">Active Calls</p>
                     </div>
+                    
+                    <!-- Active Warrants -->
                     <div class="dashboard-card">
                         <h3>Active Warrants</h3>
-                        <p class="stat-number">0</p>
+                        <p class="stat-number" id="active-warrants">0</p>
                         <p class="stat-label">Outstanding</p>
                     </div>
                 </div>
-
+                
+                <!-- Real-time Sections Grid -->
+                <div class="realtime-grid">
+                    <!-- Active Units List -->
+                    <div class="realtime-section">
+                        <h3>Unit Status Board</h3>
+                        <div id="active-units-list" class="scrollable-list">
+                            <p class="no-units">No units on duty</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Calls Feed -->
+                    <div class="realtime-section">
+                        <h3>Recent Calls (Auto-expires)</h3>
+                        <div id="recent-calls-list" class="scrollable-list">
+                            <p class="no-calls">No recent calls</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Arrests Feed -->
+                    <div class="realtime-section">
+                        <h3>Recent Arrests</h3>
+                        <div id="recent-arrests-feed" class="scrollable-list">
+                            <p class="no-arrests">No recent arrests</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Probation List -->
+                    <div class="realtime-section">
+                        <h3>Active Probation</h3>
+                        <div id="probation-list" class="scrollable-list">
+                            <p class="no-probation">No active probation</p>
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- Quick Actions -->
                 <div class="quick-actions">
                     <h3>Quick Actions</h3>
                     <div class="action-buttons">
-                        <button class="action-btn">New Report</button>
-                        <button class="action-btn">Search Profile</button>
-                        <button class="action-btn">Create BOLO</button>
-                        <button class="action-btn">View Roster</button>
+                        <button class="action-btn" data-action="new-report">New Report</button>
+                        <button class="action-btn" data-action="search-profile">Search Profile</button>
+                        <button class="action-btn" data-action="create-bolo">Create BOLO</button>
+                        <button class="action-btn" data-action="view-roster">View Roster</button>
+                        <button class="action-btn" onclick="refreshDashboard()">Refresh Dashboard</button>
+                    </div>
+                </div>
+                
+                <!-- Statistics Overview -->
+                <div class="statistics-section">
+                    <h3>Department Statistics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <span class="stat-label">Today's Arrests</span>
+                            <span class="stat-value" id="stat-arrests-today">0</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Today's Citations</span>
+                            <span class="stat-value" id="stat-citations-today">0</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Today's Reports</span>
+                            <span class="stat-value" id="stat-reports-today">0</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Response Time (Avg)</span>
+                            <span class="stat-value" id="stat-response-time">--:--</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -83,63 +163,76 @@
                 <h2>Citizen Profiles</h2>
                 <div class="search-container">
                     <input type="text" id="profile-search" placeholder="Search by name, ID, or phone number...">
-                    <button class="btn-search">Search</button>
+                    <button class="btn-search" id="btn-search-profiles">Search</button>
                 </div>
-                <div class="results-container">
-                    <p>No search results</p>
+                <div class="results-container" id="profile-results">
+                    <p class="no-results">No search results</p>
                 </div>
             </div>
 
-            <!-- Incidents Tab -->
+            <!-- Other tabs unchanged... -->
             <div id="incidents" class="tab-content">
                 <h2>Incidents</h2>
-                <p>Incident management coming soon...</p>
+                <div class="content-placeholder">
+                    <p>Incident management system will be available in the next update.</p>
+                </div>
             </div>
 
-            <!-- Reports Tab -->
             <div id="reports" class="tab-content">
                 <h2>Reports</h2>
-                <p>Report system coming soon...</p>
+                <div class="content-placeholder">
+                    <p>Report creation and management will be available in the next update.</p>
+                </div>
             </div>
 
-            <!-- Warrants Tab -->
             <div id="warrants" class="tab-content">
                 <h2>Warrants</h2>
-                <p>Warrant system coming soon...</p>
+                <div class="content-placeholder">
+                    <p>Warrant system will be available in the next update.</p>
+                </div>
             </div>
 
-            <!-- BOLOs Tab -->
             <div id="bolos" class="tab-content">
                 <h2>Be On Look Out (BOLOs)</h2>
-                <p>BOLO system coming soon...</p>
+                <div class="content-placeholder">
+                    <p>BOLO system will be available in the next update.</p>
+                </div>
             </div>
 
-            <!-- DMV Tab -->
             <div id="dmv" class="tab-content">
                 <h2>Department of Motor Vehicles</h2>
-                <p>Vehicle registration system coming soon...</p>
+                <div class="content-placeholder">
+                    <p>Vehicle registration and license management will be available in the next update.</p>
+                </div>
             </div>
 
-            <!-- Weapons Tab -->
             <div id="weapons" class="tab-content">
                 <h2>Weapons Registry</h2>
-                <p>Weapons database coming soon...</p>
+                <div class="content-placeholder">
+                    <p>Weapons database and registration will be available in the next update.</p>
+                </div>
             </div>
 
-            <!-- Roster Tab -->
             <div id="roster" class="tab-content">
                 <h2>Department Roster</h2>
-                <p>Roster management coming soon...</p>
+                <div class="content-placeholder">
+                    <p>Department roster and personnel management will be available in the next update.</p>
+                </div>
             </div>
         </div>
 
         <!-- Footer -->
         <div class="mdt-footer">
-            <span>Medit8z MDT v0.1.0</span>
+            <span>Medit8z MDT v0.2.0</span>
             <span id="connection-status">● Connected</span>
         </div>
     </div>
 
+    <!-- Notification Container -->
+    <div id="notification-container" class="notification-container"></div>
+
+    <!-- Scripts - Load dashboard first to avoid undefined functions -->
+    <script src="js/dashboard.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

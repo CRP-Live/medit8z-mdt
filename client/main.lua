@@ -1,4 +1,4 @@
-﻿local Framework = nil
+local Framework = nil
 local FrameworkName = Config.Framework
 local MDTOpen = false
 local PlayerData = {}
@@ -146,6 +146,25 @@ local function CloseMDT()
 end
 
 -- ════════════════════════════════════════════════════════════════════
+-- ox_inventory Client Export
+-- This is what ox_inventory is looking for
+-- ════════════════════════════════════════════════════════════════════
+exports('mdt_tablet', function(data, slot)
+    -- Request MDT access from server
+    local hasAccess, department = lib.callback.await('medit8z-mdt:server:checkAccess', false)
+    if hasAccess then
+        local playerData = lib.callback.await('medit8z-mdt:server:getPlayerData', false)
+        if playerData then
+            OpenMDT(playerData, department)
+        else
+            Notify('Failed to load player data', 'error')
+        end
+    else
+        Notify('You don\'t have access to the MDT', 'error')
+    end
+end)
+
+-- ════════════════════════════════════════════════════════════════════
 -- Event Handlers
 -- ════════════════════════════════════════════════════════════════════
 RegisterNetEvent('medit8z-mdt:client:openMDT', function(playerData, department)
@@ -176,27 +195,15 @@ RegisterNUICallback('error', function(data, cb)
     cb('ok')
 end)
 
--- ════════════════════════════════════════════════════════════════════
--- ox_target Integration (for future use)
--- ════════════════════════════════════════════════════════════════════
-if Config.Integration.target == 'ox_target' then
-    -- Example: Add target to evidence lockers, computers, etc.
-    -- This will be used in later phases
-    
-    -- exports.ox_target:addModel('prop_computer_01', {
-    --     {
-    --         name = 'mdt_computer',
-    --         icon = 'fas fa-laptop',
-    --         label = 'Access MDT',
-    --         onSelect = function()
-    --             TriggerEvent('medit8z-mdt:client:openFromComputer')
-    --         end,
-    --         canInteract = function(entity, distance, coords, name)
-    --             return lib.callback.await('medit8z-mdt:server:checkAccess', false)
-    --         end
-    --     }
-    -- })
-end
+RegisterNUICallback('getDashboardStats', function(data, cb)
+    local stats = lib.callback.await('medit8z-mdt:server:getDashboardStats', false)
+    cb(stats or {})
+end)
+
+RegisterNUICallback('searchProfiles', function(data, cb)
+    local results = lib.callback.await('medit8z-mdt:server:searchProfiles', false, data.query)
+    cb(results or {})
+end)
 
 -- ════════════════════════════════════════════════════════════════════
 -- Keyboard Controls
@@ -240,7 +247,7 @@ AddEventHandler('onResourceStop', function(resourceName)
 end)
 
 -- ════════════════════════════════════════════════════════════════════
--- Exports
+-- Additional Exports for external use
 -- ════════════════════════════════════════════════════════════════════
 exports('IsOpen', function()
     return MDTOpen
@@ -265,3 +272,91 @@ end)
 exports('CloseMDT', function()
     CloseMDT()
 end)
+
+-- ════════════════════════════════════════════════════════════════════
+-- ADD THIS TO THE BOTTOM OF client/main.lua
+-- Complete fix for closing issues and cursor problems
+-- ════════════════════════════════════════════════════════════════════
+
+-- Debug Commands for Testing
+if Config.Debug then
+    -- Force close MDT and clear cursor
+    RegisterCommand('mdtfixcursor', function()
+        MDTOpen = false
+        SetNuiFocus(false, false)
+        SetNuiFocusKeepInput(false)
+        SendNUIMessage({ action = 'close' })
+        
+        if Config.UI.blurBackground then
+            TriggerScreenblurFadeOut(250)
+        end
+        
+        if Config.UI.useAnimation then
+            ClearPedTasks(PlayerPedId())
+        end
+        
+        print('^2[MDT Debug]^7 Force closed MDT and cleared cursor')
+    end, false)
+    
+    -- Check MDT state
+    RegisterCommand('mdtstate', function()
+        print('^3[MDT Debug]^7 ════════════════════')
+        print('^3[MDT Debug]^7 Is Open: ' .. tostring(MDTOpen))
+        print('^3[MDT Debug]^7 NUI Focus: ' .. tostring(IsNuiFocusKeeping()))
+        print('^3[MDT Debug]^7 NUI Has Focus: ' .. tostring(IsNuiFocus()))
+        print('^3[MDT Debug]^7 Department: ' .. tostring(Department))
+        print('^3[MDT Debug]^7 ════════════════════')
+    end, false)
+    
+    -- Emergency reset
+    RegisterCommand('mdtreset', function()
+        -- Force close everything
+        MDTOpen = false
+        Department = nil
+        PlayerData = {}
+        
+        -- Clear all UI states
+        SetNuiFocus(false, false)
+        SetNuiFocusKeepInput(false)
+        SendNUIMessage({ action = 'close' })
+        
+        -- Clear effects
+        if Config.UI.blurBackground then
+            TriggerScreenblurFadeOut(0)
+            ClearTimecycleModifier()
+        end
+        
+        -- Clear animations
+        ClearPedTasks(PlayerPedId())
+        
+        print('^2[MDT Debug]^7 MDT completely reset')
+    end, false)
+end
+
+-- Monitor for stuck cursor (failsafe)
+CreateThread(function()
+    while true do
+        Wait(1000)
+        -- We just rely on MDTOpen state
+        -- If cursor gets stuck, use /mdtfixcursor
+    end
+end)
+
+-- Ensure proper cleanup on resource stop
+AddEventHandler('onResourceStop', function(resourceName)
+    if GetCurrentResourceName() ~= resourceName then return end
+    
+    -- Force clear everything
+    SetNuiFocus(false, false)
+    SetNuiFocusKeepInput(false)
+    SendNUIMessage({ action = 'close' })
+    
+    if Config.UI.blurBackground then
+        TriggerScreenblurFadeOut(0)
+        ClearTimecycleModifier()
+    end
+    
+    ClearPedTasks(PlayerPedId())
+end)
+
+print('^2[medit8z-mdt]^7 Closing fix loaded - Use /mdtfixcursor if cursor gets stuck')
