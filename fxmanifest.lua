@@ -1,13 +1,15 @@
 ﻿fx_version 'cerulean'
 game 'gta5'
+lua54 'yes'
 
 name 'medit8z-mdt'
 author 'CRP-Live'
-version '0.1.0-dev'
+version '0.1.0'
 description 'Advanced Mobile Data Terminal for FiveM'
 
 shared_scripts {
-    'config/config.lua'
+    '@ox_lib/init.lua',
+    'config.lua'
 }
 
 client_scripts {
@@ -28,4 +30,8 @@ files {
     'ui/assets/**/*'
 }
 
-lua54 'yes'
+dependencies {
+    'oxmysql',
+    'ox_lib',
+    'ox_inventory'
+}
